@@ -1,0 +1,2 @@
+﻿  main.cpp
+C:\Work\BreakLimit_C_Server\main.cpp(14,40): error C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
