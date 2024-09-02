@@ -1,9 +1,9 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Work\\BreakLimit_C_Server\\",
+  "WorkspaceRootPath": "C:\\Work\\TCP-IP_Server\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{4B9903C6-6D7B-4A10-9FB7-31B664642B05}|BreakLimit_C_Server.vcxproj|C:\\Work\\BreakLimit_C_Server\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{4B9903C6-6D7B-4A10-9FB7-31B664642B05}|BreakLimit_C_Server.vcxproj|C:\\Work\\TCP-IP_Server\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{4B9903C6-6D7B-4A10-9FB7-31B664642B05}|BreakLimit_C_Server.vcxproj|solutionrelative:main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
@@ -14,17 +14,21 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "main.cpp",
-              "DocumentMoniker": "C:\\Work\\BreakLimit_C_Server\\main.cpp",
+              "DocumentMoniker": "C:\\Work\\TCP-IP_Server\\main.cpp",
               "RelativeDocumentMoniker": "main.cpp",
-              "ToolTip": "C:\\Work\\BreakLimit_C_Server\\main.cpp",
+              "ToolTip": "C:\\Work\\TCP-IP_Server\\main.cpp",
               "RelativeToolTip": "main.cpp",
-              "ViewState": "AQIAABIAAAAAAAAAAAAAACUAAAAbAAAA",
+              "ViewState": "AQIAAC0AAAAAAAAAAAAAAEEAAAAfAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-09-02T08:00:51.246Z",
               "EditorCaption": ""
