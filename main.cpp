@@ -2,85 +2,79 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <WinSock2.h>
 #include <iostream>
-#include <cstring>  // For memset
+#include <cstring>
 #pragma comment(lib, "ws2_32")
 using namespace std;
 
-int main() {
+int main()
+{
     WSAData wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) 
-    {
-        cout << "WSAStartup failed with error: " << WSAGetLastError() << endl;
-        return 1;
-    }
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData));
 
-    SOCKET ServerSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (ServerSocket == INVALID_SOCKET)
-    {
-        cout << "Socket creation failed with error: " << WSAGetLastError() << endl;
-        WSACleanup();
-        return 1;
-    }
+    SOCKET ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     sockaddr_in ServerSocketAddress;
     memset(&ServerSocketAddress, 0, sizeof(ServerSocketAddress));
     ServerSocketAddress.sin_family = AF_INET;
     ServerSocketAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
     ServerSocketAddress.sin_port = htons(10880);
+    bind(ListenSocket, (struct sockaddr*)&ServerSocketAddress, sizeof(ServerSocketAddress));
+ 
+    listen(ListenSocket, 5);
 
-    if (bind(ServerSocket, (struct sockaddr*)&ServerSocketAddress, sizeof(ServerSocketAddress)) == SOCKET_ERROR) {
-        cout << "Bind failed with error: " << WSAGetLastError() << endl;
-        closesocket(ServerSocket);
-        WSACleanup();
-        return 1;
-    }
+    fd_set ReadSockets;
+    FD_ZERO(&ReadSockets);
+    FD_SET(ListenSocket, &ReadSockets);
 
-    if (listen(ServerSocket, 5) == SOCKET_ERROR) {
-        cout << "Listen failed with error: " << WSAGetLastError() << endl;
-        closesocket(ServerSocket);
-        WSACleanup();
-        return 1;
-    }
+    fd_set CopyReadSockets; 
 
-    cout << "Waiting for client connection..." << endl;
+    struct timeval TimeOut;
+    TimeOut.tv_sec = 0;
+    TimeOut.tv_usec = 10;
 
-    sockaddr_in ClientSocketAddress;
-    int ClientSocketAddressSize = sizeof(ClientSocketAddress);
-    SOCKET ClientSocket = accept(ServerSocket, (struct sockaddr*)&ClientSocketAddress, &ClientSocketAddressSize);
-    if (ClientSocket == INVALID_SOCKET) {
-        cout << "Accept failed with error: " << WSAGetLastError() << endl;
-        closesocket(ServerSocket);
-        WSACleanup();
-        return 1;
-    }
+    while (true)
+    {
+        CopyReadSockets = ReadSockets;
+        int ReadSocketsCount = select(0, &CopyReadSockets, 0, 0, &TimeOut);
+        if (ReadSocketsCount == 0)
+        {
+            continue;
+        }
+        else if (ReadSocketsCount < 0)
+        {
+            break;
+        }
+        else
+        {
+            for (int i = 0; i < (int)ReadSockets.fd_count; ++i)
+            {
+                if (FD_ISSET(ReadSockets.fd_array[i], &CopyReadSockets))
+                {
+                    if (ReadSockets.fd_array[i] == ListenSocket)
+                    {
+                        sockaddr_in ClientSocketAddress;
+                        memset(&ClientSocketAddress, 0, sizeof(ClientSocketAddress));
+                        int ClientSocketAddressSize = sizeof(ClientSocketAddress);
+                        SOCKET ClientSocket = accept(ListenSocket, (struct sockaddr*)&ClientSocketAddress,&ClientSocketAddressSize);
+                        FD_SET(ClientSocket, &ReadSockets);
+                    }
+                    else
+                    {
+                        char Buffer[1024] = { 0 };
+                        int ReceiveLength = recv(ReadSockets.fd_array[i], Buffer, 1024, 0);
 
-    // 클라이언트에게 "10 + 20" 문자열 전송
-    const char* problem = "10 + 20";
-    send(ClientSocket, problem, (int)strlen(problem), 0);
-
-    // 클라이언트로부터 결과 수신
-    char buffer[1024] = { 0 };
-    int recvBytes = recv(ClientSocket, buffer, sizeof(buffer) - 1, 0); // -1 for null terminator
-    if (recvBytes > 0) {
-        buffer[recvBytes] = '\0'; // Null-terminate the received data
-        printf("Server received: %s\n", buffer);
-
-        // 클라이언트로부터 받은 문자열이 "30"인지 확인
-        if (strcmp(buffer, "30") == 0) {
-            const char* message = "메롱";
-            send(ClientSocket, message, (int)strlen(message), 0);
+                        if (ReceiveLength <= 0)
+                        {
+                            closesocket(ReadSockets.fd_array[i]);
+                        }
+                        else
+                        {
+                            int SendLength = send(ReadSockets.fd_array[i], Buffer, ReceiveLength, 0); 
+                        }
+                    }
+                }
+            }
         }
     }
-    else if (recvBytes == 0) {
-        cout << "Connection closed by client." << endl;
-    }
-    else {
-        cout << "recv failed with error: " << WSAGetLastError() << endl;
-    }
-
-    closesocket(ClientSocket);
-    closesocket(ServerSocket);
-    WSACleanup();
-
     return 0;
 }
