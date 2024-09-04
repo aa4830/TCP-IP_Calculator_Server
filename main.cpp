@@ -6,6 +6,13 @@
 #pragma comment(lib, "ws2_32")
 using namespace std;
 
+#pragma pack(push, 1) // 구조체의 멤버들이 1바이트 경계로 정렬되도록 설정
+struct Data
+{
+    char Message;
+};
+#pragma pack(pop) // 이전 메모리 정렬 설정을 복원. 뒤로 사용하는 구조체들은 정렬안되게 하기.
+
 int main()
 {
     WSAData wsaData;
@@ -16,7 +23,7 @@ int main()
     sockaddr_in ServerSocketAddress;
     memset(&ServerSocketAddress, 0, sizeof(ServerSocketAddress));
     ServerSocketAddress.sin_family = AF_INET;
-    ServerSocketAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
+    ServerSocketAddress.sin_addr.s_addr = inet_addr("192.168.3.164");
     ServerSocketAddress.sin_port = htons(10880);
     bind(ListenSocket, (struct sockaddr*)&ServerSocketAddress, sizeof(ServerSocketAddress));
  
@@ -27,7 +34,6 @@ int main()
     FD_SET(ListenSocket, &ReadSockets);
 
     fd_set CopyReadSockets; 
-
     struct timeval TimeOut;
     TimeOut.tv_sec = 0;
     TimeOut.tv_usec = 10;
@@ -57,24 +63,37 @@ int main()
                         int ClientSocketAddressSize = sizeof(ClientSocketAddress);
                         SOCKET ClientSocket = accept(ListenSocket, (struct sockaddr*)&ClientSocketAddress,&ClientSocketAddressSize);
                         FD_SET(ClientSocket, &ReadSockets);
+                        cout << "새" << inet_ntoa(ServerSocketAddress.sin_addr) << "가 접속했당" << endl; // inet_ntoa : IP 주소를 이진 형태로 변환
                     }
                     else
                     {
-                        char Buffer[1024] = { 0 };
-                        int ReceiveLength = recv(ReadSockets.fd_array[i], Buffer, 1024, 0);
+                        Data RecvPacket;
+                        int ReceiveLength = recv(ReadSockets.fd_array[i], (char*)&RecvPacket, sizeof(RecvPacket), 0);
 
                         if (ReceiveLength <= 0)
                         {
-                            closesocket(ReadSockets.fd_array[i]);
+                            cout << "클라이언트가 나갔당" << endl;
+                            continue;
                         }
                         else
                         {
-                            int SendLength = send(ReadSockets.fd_array[i], Buffer, ReceiveLength, 0); 
+                            for (int j = 0; j < (int)ReadSockets.fd_count; ++j)
+                            {
+                                if (ReadSockets.fd_array[j] != ListenSocket)
+                                {
+                                    Data Packet;
+                                    Packet.Message = RecvPacket.Message;
+                                    send(ReadSockets.fd_array[j], (char*)&Packet, sizeof(Packet), 0);
+                                    cout << "클라이언트" << inet_ntoa(ServerSocketAddress.sin_addr)<<"가 메세지를 보냈당" << endl;
+                                }
+                            }
                         }
                     }
                 }
             }
         }
     }
+    closesocket(ListenSocket);
+    WSACleanup();
     return 0;
 }
