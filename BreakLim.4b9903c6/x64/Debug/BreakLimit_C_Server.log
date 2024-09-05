@@ -1,6 +1,6 @@
 ﻿  main.cpp
-C:\Work\TCP-IP_Server\main.cpp(58,45): warning C4244: '=': conversion from 'float' to 'short', possible loss of data
-C:\Work\TCP-IP_Server\main.cpp(61,45): warning C4244: '=': conversion from 'float' to 'short', possible loss of data
-C:\Work\TCP-IP_Server\main.cpp(64,45): warning C4244: '=': conversion from 'float' to 'short', possible loss of data
-C:\Work\TCP-IP_Server\main.cpp(69,49): warning C4244: '=': conversion from 'float' to 'short', possible loss of data
+C:\Work\TCP-IP_Server\main.cpp(60,31): warning C4244: '=': conversion from 'float' to 'short', possible loss of data
+C:\Work\TCP-IP_Server\main.cpp(63,31): warning C4244: '=': conversion from 'float' to 'short', possible loss of data
+C:\Work\TCP-IP_Server\main.cpp(66,31): warning C4244: '=': conversion from 'float' to 'short', possible loss of data
+C:\Work\TCP-IP_Server\main.cpp(71,35): warning C4244: '=': conversion from 'float' to 'short', possible loss of data
   BreakLimit_C_Server.vcxproj -> C:\Work\TCP-IP_Server\x64\Debug\BreakLimit_C_Server.exe

@@ -3,17 +3,9 @@
 #include <WinSock2.h>
 #include <iostream>
 #include <cstring>
+#include <string>
 #pragma comment(lib, "ws2_32")
 using namespace std;
-
-#pragma pack(push, 1) 
-struct Data
-{
-    float Number1;
-    char Operator;
-    float Number2;
-};
-#pragma pack(pop) 
 
 int main()
 {
@@ -43,41 +35,50 @@ int main()
     }
     while (1)
     {
-        Data RecvPacket;
+        char Buffer[1024] = { 0, };
         short Result;
-        int ReceiveLength = recv(ClientSocket, (char*)&RecvPacket, sizeof(RecvPacket), 0);
+        int ReceiveLength = recv(ClientSocket, Buffer, (int)sizeof(Buffer), 0);
+        Buffer[ReceiveLength] = '\0';
         if (ReceiveLength <= 0)
         {
             closesocket(ClientSocket);
         }
         else
         {
-            switch (RecvPacket.Operator)
+            string ReceivedMessage(Buffer);
+            size_t OperatorPosition = ReceivedMessage.find_first_of("+-*/");
+            char Operator = ReceivedMessage[OperatorPosition];
+            string FirstNum = ReceivedMessage.substr(0, OperatorPosition);
+            string  SecNum = ReceivedMessage.substr(OperatorPosition + 1);
+            
+            float num1 = std::stof(FirstNum);
+            float num2 = std::stof(SecNum);
+
+            switch (Operator)
             {
             case '+':
-                Result = RecvPacket.Number1 + RecvPacket.Number2;
+                Result = num1 + num2;
                 break;
             case '-':
-                Result = RecvPacket.Number1 - RecvPacket.Number2;
+                Result = num1 - num2;
                 break;
             case '*':
-                Result = RecvPacket.Number1 * RecvPacket.Number2;
+                Result = num1 * num2;
                 break;
             case '/':
-                if (RecvPacket.Number2 != 0)
+                if (num2 != 0)
                 {
-                    Result = RecvPacket.Number1 / RecvPacket.Number2;
+                    Result = num1 / num2;
                     break;
                 }
             default:
                 closesocket(ListenSocket);
                 WSACleanup();
-                return 1;
             }
             char Buffer[1024] = { 0, };
             sprintf(Buffer, "%d", Result);
 
-            int SendLength = send(ClientSocket, Buffer, (int)sizeof(Buffer), 0);
+            send(ClientSocket, Buffer, (int)sizeof(Buffer), 0);
         }
     }
     closesocket(ListenSocket);
