@@ -6,17 +6,22 @@
 #pragma comment(lib, "ws2_32")
 using namespace std;
 
-#pragma pack(push, 1) // 구조체의 멤버들이 1바이트 경계로 정렬되도록 설정
+#pragma pack(push, 1) 
 struct Data
 {
-    char Message;
+    short Number1;
+    char Operator;
+    short Number2;
 };
-#pragma pack(pop) // 이전 메모리 정렬 설정을 복원. 뒤로 사용하는 구조체들은 정렬안되게 하기.
+#pragma pack(pop) 
 
 int main()
 {
     WSAData wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData));
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+    {
+        return 1;
+    };
 
     SOCKET ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -28,70 +33,45 @@ int main()
     bind(ListenSocket, (struct sockaddr*)&ServerSocketAddress, sizeof(ServerSocketAddress));
  
     listen(ListenSocket, 5);
+    sockaddr_in ClientSocketAddress; 
+    memset(&ClientSocketAddress, 0, sizeof(ClientSocketAddress));
+    int ClientSocketAddressSize = sizeof(ClientSocketAddress); 
+    SOCKET ClientSocket = accept(ListenSocket, (struct sockaddr*)&ClientSocketAddress, &ClientSocketAddressSize);
 
-    fd_set ReadSockets;
-    FD_ZERO(&ReadSockets);
-    FD_SET(ListenSocket, &ReadSockets);
-
-    fd_set CopyReadSockets; 
-    struct timeval TimeOut;
-    TimeOut.tv_sec = 0;
-    TimeOut.tv_usec = 10;
-
-    while (true)
+    Data RecvPacket;
+    short Result;
+    int ReceiveLength = recv(ClientSocket, (char*)&RecvPacket, sizeof(RecvPacket), 0);
+    if (ReceiveLength <= 0)
     {
-        CopyReadSockets = ReadSockets;
-        int ReadSocketsCount = select(0, &CopyReadSockets, 0, 0, &TimeOut);
-        if (ReadSocketsCount == 0)
+        closesocket(ClientSocket);   
+    }
+    else
+    {
+        switch (RecvPacket.Operator)
         {
-            continue;
-        }
-        else if (ReadSocketsCount < 0)
-        {
+        case '+':
+            Result = RecvPacket.Number1 + RecvPacket.Number2;
             break;
-        }
-        else
-        {
-            for (int i = 0; i < (int)ReadSockets.fd_count; ++i)
+        case '-':
+            Result = RecvPacket.Number1 - RecvPacket.Number2;
+            break;
+        case '*':
+            Result = RecvPacket.Number1 * RecvPacket.Number2;
+            break;
+        case '/':
+            if (RecvPacket.Number2 != 0) 
             {
-                if (FD_ISSET(ReadSockets.fd_array[i], &CopyReadSockets))
-                {
-                    if (ReadSockets.fd_array[i] == ListenSocket)
-                    {
-                        sockaddr_in ClientSocketAddress;
-                        memset(&ClientSocketAddress, 0, sizeof(ClientSocketAddress));
-                        int ClientSocketAddressSize = sizeof(ClientSocketAddress);
-                        SOCKET ClientSocket = accept(ListenSocket, (struct sockaddr*)&ClientSocketAddress,&ClientSocketAddressSize);
-                        FD_SET(ClientSocket, &ReadSockets);
-                        cout << "새" << inet_ntoa(ServerSocketAddress.sin_addr) << "가 접속했당" << endl; // inet_ntoa : IP 주소를 이진 형태로 변환
-                    }
-                    else
-                    {
-                        Data RecvPacket;
-                        int ReceiveLength = recv(ReadSockets.fd_array[i], (char*)&RecvPacket, sizeof(RecvPacket), 0);
-
-                        if (ReceiveLength <= 0)
-                        {
-                            cout << "클라이언트가 나갔당" << endl;
-                            continue;
-                        }
-                        else
-                        {
-                            for (int j = 0; j < (int)ReadSockets.fd_count; ++j)
-                            {
-                                if (ReadSockets.fd_array[j] != ListenSocket)
-                                {
-                                    Data Packet;
-                                    Packet.Message = RecvPacket.Message;
-                                    send(ReadSockets.fd_array[j], (char*)&Packet, sizeof(Packet), 0);
-                                    cout << "클라이언트" << inet_ntoa(ServerSocketAddress.sin_addr)<<"가 메세지를 보냈당" << endl;
-                                }
-                            }
-                        }
-                    }
-                }
+                Result = RecvPacket.Number1 / RecvPacket.Number2;
             }
+        default:
+            closesocket(ListenSocket);
+            WSACleanup();
+            return 1;
         }
+        char Buffer[1024] = { 0, };
+        sprintf(Buffer, "%d", Result);
+
+        int SendLength = send(ClientSocket, Buffer, (int)sizeof(Buffer), 0);
     }
     closesocket(ListenSocket);
     WSACleanup();
