@@ -9,9 +9,9 @@ using namespace std;
 #pragma pack(push, 1) 
 struct Data
 {
-    short Number1;
+    float Number1;
     char Operator;
-    short Number2;
+    float Number2;
 };
 #pragma pack(pop) 
 
@@ -37,41 +37,48 @@ int main()
     memset(&ClientSocketAddress, 0, sizeof(ClientSocketAddress));
     int ClientSocketAddressSize = sizeof(ClientSocketAddress); 
     SOCKET ClientSocket = accept(ListenSocket, (struct sockaddr*)&ClientSocketAddress, &ClientSocketAddressSize);
-
-    Data RecvPacket;
-    short Result;
-    int ReceiveLength = recv(ClientSocket, (char*)&RecvPacket, sizeof(RecvPacket), 0);
-    if (ReceiveLength <= 0)
+    if (ClientSocket)
     {
-        closesocket(ClientSocket);   
+        cout << "클라이언트 입장" << endl;
     }
-    else
+    while (1)
     {
-        switch (RecvPacket.Operator)
+        Data RecvPacket;
+        short Result;
+        int ReceiveLength = recv(ClientSocket, (char*)&RecvPacket, sizeof(RecvPacket), 0);
+        if (ReceiveLength <= 0)
         {
-        case '+':
-            Result = RecvPacket.Number1 + RecvPacket.Number2;
-            break;
-        case '-':
-            Result = RecvPacket.Number1 - RecvPacket.Number2;
-            break;
-        case '*':
-            Result = RecvPacket.Number1 * RecvPacket.Number2;
-            break;
-        case '/':
-            if (RecvPacket.Number2 != 0) 
-            {
-                Result = RecvPacket.Number1 / RecvPacket.Number2;
-            }
-        default:
-            closesocket(ListenSocket);
-            WSACleanup();
-            return 1;
+            closesocket(ClientSocket);
         }
-        char Buffer[1024] = { 0, };
-        sprintf(Buffer, "%d", Result);
+        else
+        {
+            switch (RecvPacket.Operator)
+            {
+            case '+':
+                Result = RecvPacket.Number1 + RecvPacket.Number2;
+                break;
+            case '-':
+                Result = RecvPacket.Number1 - RecvPacket.Number2;
+                break;
+            case '*':
+                Result = RecvPacket.Number1 * RecvPacket.Number2;
+                break;
+            case '/':
+                if (RecvPacket.Number2 != 0)
+                {
+                    Result = RecvPacket.Number1 / RecvPacket.Number2;
+                    break;
+                }
+            default:
+                closesocket(ListenSocket);
+                WSACleanup();
+                return 1;
+            }
+            char Buffer[1024] = { 0, };
+            sprintf(Buffer, "%d", Result);
 
-        int SendLength = send(ClientSocket, Buffer, (int)sizeof(Buffer), 0);
+            int SendLength = send(ClientSocket, Buffer, (int)sizeof(Buffer), 0);
+        }
     }
     closesocket(ListenSocket);
     WSACleanup();
