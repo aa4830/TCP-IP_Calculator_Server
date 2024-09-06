@@ -35,24 +35,26 @@ int main()
     }
     while (1)
     {
-        char Buffer[1024] = { 0, };
-        short Result;
-        int ReceiveLength = recv(ClientSocket, Buffer, (int)sizeof(Buffer), 0);
-        Buffer[ReceiveLength] = '\0';
+        char RecvBuffer[1024] = { 0, };
+        int ReceiveLength = recv(ClientSocket, RecvBuffer, sizeof(RecvBuffer), 0);
         if (ReceiveLength <= 0)
         {
             closesocket(ClientSocket);
         }
         else
         {
-            string ReceivedMessage(Buffer);
+            cout <<"클라이언트가 보낸 값 : "  <<  RecvBuffer << endl;
+            string ReceivedMessage(RecvBuffer);
             size_t OperatorPosition = ReceivedMessage.find_first_of("+-*/");
             char Operator = ReceivedMessage[OperatorPosition];
             string FirstNum = ReceivedMessage.substr(0, OperatorPosition);
             string  SecNum = ReceivedMessage.substr(OperatorPosition + 1);
             
+
+
             float num1 = std::stof(FirstNum);
             float num2 = std::stof(SecNum);
+            float Result;
 
             switch (Operator)
             {
@@ -75,10 +77,12 @@ int main()
                 closesocket(ListenSocket);
                 WSACleanup();
             }
-            char Buffer[1024] = { 0, };
-            sprintf(Buffer, "%d", Result);
-
-            send(ClientSocket, Buffer, (int)sizeof(Buffer), 0);
+            char SendBuffer[1024] = { 0, };
+            string StringResult = to_string(Result);
+            strcpy(SendBuffer, StringResult.c_str());
+            
+            cout << " 계산결과 : " << SendBuffer << endl;
+            send(ClientSocket, SendBuffer, sizeof(SendBuffer), 0);
         }
     }
     closesocket(ListenSocket);
