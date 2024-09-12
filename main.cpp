@@ -2,6 +2,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <WinSock2.h>
 #include <iostream>
+#include <vector>
 #include <cstring>
 #include <string>
 #pragma comment(lib, "ws2_32")
@@ -16,7 +17,7 @@ int OperatorSequence(char Operator)
     default : return 0;
     }
 }
-float Calculate(float a, float b, char Operator)
+float Calculator(float a, float b, char Operator)
 {
     switch (Operator)
     {
@@ -32,6 +33,51 @@ float Calculate(float a, float b, char Operator)
         cout << "연산자가 없음" << endl;
     }
 }
+float FinalCalculator(string RecvNumAndOperator)
+{
+    vector<float> NumbersVector;
+    vector<char> OperatorVector;
+    size_t Index = 0;
+    while (Index < RecvNumAndOperator.length())
+    {
+        if (isdigit(RecvNumAndOperator[Index])) // 숫자면 true를 반환
+        {
+            size_t Length;
+            float value = stof(RecvNumAndOperator.substr(Index), &Length); //현재 Index부터 뒤 문자열을 실수로 바꾸기, Length에 문자열 길이 반환
+            NumbersVector.push_back(value); // 변환한 실수를 Numbers vector에 저장
+            Index += Length; //문자길이 만큼 문자열 Index 증가
+        }
+        else if(strchr("+-*/", RecvNumAndOperator[Index])) // 현재 문자가 연산자가 맞나 한 번 더 확인
+        {
+            while (!OperatorVector.empty() && OperatorSequence(OperatorVector.back() >= OperatorSequence(RecvNumAndOperator[Index]))) // OperatorVector가 비었고, 가장 뒤의 연산자의 값이 현재 문자열의 연산자의 우선순위를 비교
+            {
+                float Value2 = NumbersVector.back(); // 벡터의 마지막 요소 반환
+                NumbersVector.pop_back(); // 제일 뒤 요소 삭제
+                float Value1 = NumbersVector.back();
+                NumbersVector.pop_back();
+                char Operator = OperatorVector.back();
+                OperatorVector.pop_back();
+                NumbersVector.push_back(Calculator(Value1, Value2, Operator));
+            }
+        }
+        OperatorVector.push_back(RecvNumAndOperator[Index]);
+        Index++;
+    }
+    while (!OperatorVector.empty())
+    {
+        float Value2 = NumbersVector.back();
+        NumbersVector.pop_back();
+        float Value1 = NumbersVector.back();
+        NumbersVector.pop_back();
+        char  Operator = OperatorVector.back();
+        OperatorVector.pop_back();
+        NumbersVector.push_back(Calculator(Value1, Value2, Operator));
+    }
+    if (NumbersVector.size() != 1)
+
+    return NumbersVector.back();
+}
+
 
 int main()
 {

@@ -1,2 +1,3 @@
 ﻿  main.cpp
+C:\Work\TCP-IP_Server\main.cpp(35,1): warning C4715: 'Calculator': not all control paths return a value
   BreakLimit_C_Server.vcxproj -> C:\Work\TCP-IP_Server\x64\Debug\BreakLimit_C_Server.exe
