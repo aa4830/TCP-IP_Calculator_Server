@@ -7,6 +7,32 @@
 #pragma comment(lib, "ws2_32")
 using namespace std;
 
+int OperatorSequence(char Operator)
+{
+    switch (Operator)
+    {
+    case '+': case '-' : return 1;
+    case '*' : case '/' : return 1;
+    default : return 0;
+    }
+}
+float Calculate(float a, float b, char Operator)
+{
+    switch (Operator)
+    {
+    case '+': return a + b;
+    case '-': return a - b;
+    case '*': return a * b;
+    case '/':
+        if (b != 0) 
+        {
+            return a / b;
+        }
+    default:
+        cout << "연산자가 없음" << endl;
+    }
+}
+
 int main()
 {
     WSAData wsaData;
@@ -40,6 +66,8 @@ int main()
         if (ReceiveLength <= 0)
         {
             closesocket(ClientSocket);
+            cout << "클라이언트 퇴장" << endl;
+            continue;
         }
         else
         {
@@ -49,8 +77,6 @@ int main()
             char Operator = ReceivedMessage[OperatorPosition];
             string FirstNum = ReceivedMessage.substr(0, OperatorPosition);
             string  SecNum = ReceivedMessage.substr(OperatorPosition + 1);
-            
-
 
             float num1 = std::stof(FirstNum);
             float num2 = std::stof(SecNum);
