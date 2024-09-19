@@ -13,7 +13,7 @@ int OperatorSequence(char Operator)
     switch (Operator)
     {
     case '+': case '-' : return 1;
-    case '*' : case '/' : return 1;
+    case '*' : case '/' : return 2;
     default : return 0;
     }
 }
@@ -29,27 +29,36 @@ float Calculator(float a, float b, char Operator)
         {
             return a / b;
         }
+        else
+        {
+            cout << "0으로 나눌 수 없음" << endl;
+            return 0;
+        }
     default:
-        cout << "연산자가 없음" << endl;
+        cout << "연산자가 없음" << Operator << endl;
+        return 0;
     }
 }
 float FinalCalculator(string RecvNumAndOperator)
 {
+    cout << RecvNumAndOperator << endl;
     vector<float> NumbersVector;
     vector<char> OperatorVector;
     size_t Index = 0;
     while (Index < RecvNumAndOperator.length())
     {
-        if (isdigit(RecvNumAndOperator[Index])) // 숫자면 true를 반환
+        if (isdigit(RecvNumAndOperator[Index])) // 현재 인덱스가 숫자?
         {
             size_t Length;
             float value = stof(RecvNumAndOperator.substr(Index), &Length); //현재 Index부터 뒤 문자열을 실수로 바꾸기, Length에 문자열 길이 반환
-            NumbersVector.push_back(value); // 변환한 실수를 Numbers vector에 저장
+            NumbersVector.push_back(value); // 변환한 실수를 Numbers vector 맨뒤에 추가
             Index += Length; //문자길이 만큼 문자열 Index 증가
         }
-        else if(strchr("+-*/", RecvNumAndOperator[Index])) // 현재 문자가 연산자가 맞나 한 번 더 확인
+        else if(strchr("+-*/", RecvNumAndOperator[Index])) // 현재 인덱스가 연산자?
         {
-            while (!OperatorVector.empty() && OperatorSequence(OperatorVector.back() >= OperatorSequence(RecvNumAndOperator[Index]))) // OperatorVector가 비었고, 가장 뒤의 연산자의 값이 현재 문자열의 연산자의 우선순위를 비교
+            char currentOperator = RecvNumAndOperator[Index];
+            
+            while (!OperatorVector.empty() && OperatorSequence(OperatorVector.back()) >= OperatorSequence(RecvNumAndOperator[Index]))  // OperatorVector가 비었고, 가장 뒤의 연산자의 값과 현재 문자열의 연산자의 우선순위를 비교해서 크면 계산하고 값을 저장
             {
                 float Value2 = NumbersVector.back(); // 벡터의 마지막 요소 반환
                 NumbersVector.pop_back(); // 제일 뒤 요소 삭제
@@ -59,9 +68,13 @@ float FinalCalculator(string RecvNumAndOperator)
                 OperatorVector.pop_back();
                 NumbersVector.push_back(Calculator(Value1, Value2, Operator));
             }
+            OperatorVector.push_back(currentOperator);
+            Index++;
         }
-        OperatorVector.push_back(RecvNumAndOperator[Index]);
-        Index++;
+        else
+        {
+            Index++;
+        }
     }
     while (!OperatorVector.empty())
     {
@@ -73,11 +86,16 @@ float FinalCalculator(string RecvNumAndOperator)
         OperatorVector.pop_back();
         NumbersVector.push_back(Calculator(Value1, Value2, Operator));
     }
-    if (NumbersVector.size() != 1)
-
-    return NumbersVector.back();
+    if (NumbersVector.size() == 1)
+    {
+        return NumbersVector.back();
+    }
+    else
+    {
+        cout << "결과가 다수" << endl;
+        return 0;
+    }
 }
-
 
 int main()
 {
@@ -92,7 +110,7 @@ int main()
     sockaddr_in ServerSocketAddress;
     memset(&ServerSocketAddress, 0, sizeof(ServerSocketAddress));
     ServerSocketAddress.sin_family = AF_INET;
-    ServerSocketAddress.sin_addr.s_addr = inet_addr("192.168.3.164");
+    ServerSocketAddress.sin_addr.s_addr = inet_addr("192.168.0.108");
     ServerSocketAddress.sin_port = htons(10880);
     bind(ListenSocket, (struct sockaddr*)&ServerSocketAddress, sizeof(ServerSocketAddress));
  
@@ -113,48 +131,19 @@ int main()
         {
             closesocket(ClientSocket);
             cout << "클라이언트 퇴장" << endl;
-            continue;
+            break;
         }
         else
         {
             cout <<"클라이언트가 보낸 값 : "  <<  RecvBuffer << endl;
             string ReceivedMessage(RecvBuffer);
-            size_t OperatorPosition = ReceivedMessage.find_first_of("+-*/");
-            char Operator = ReceivedMessage[OperatorPosition];
-            string FirstNum = ReceivedMessage.substr(0, OperatorPosition);
-            string  SecNum = ReceivedMessage.substr(OperatorPosition + 1);
-
-            float num1 = std::stof(FirstNum);
-            float num2 = std::stof(SecNum);
-            float Result;
-
-            switch (Operator)
-            {
-            case '+':
-                Result = num1 + num2;
-                break;
-            case '-':
-                Result = num1 - num2;
-                break;
-            case '*':
-                Result = num1 * num2;
-                break;
-            case '/':
-                if (num2 != 0)
-                {
-                    Result = num1 / num2;
-                    break;
-                }
-            default:
-                closesocket(ListenSocket);
-                WSACleanup();
-            }
+            float FinalResult  = FinalCalculator(ReceivedMessage);
+            string finalResult = to_string(FinalResult);
             char SendBuffer[1024] = { 0, };
-            string StringResult = to_string(Result);
-            strcpy(SendBuffer, StringResult.c_str());
+            strncpy(SendBuffer, finalResult.c_str(), sizeof(SendBuffer) - 1);
             
             cout << " 계산결과 : " << SendBuffer << endl;
-            send(ClientSocket, SendBuffer, sizeof(SendBuffer), 0);
+            send(ClientSocket, SendBuffer, finalResult.size(), 0);
         }
     }
     closesocket(ListenSocket);
